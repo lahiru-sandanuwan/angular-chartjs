@@ -21,7 +21,10 @@
     "lib": [
       "es2020",
       "dom"
-    ]
+    ],
+    "typeRoots": ["./node_modules/@types"],
+    "types": ["@types/antv__sam"]
+  
   },
   "angularCompilerOptions": {
     "enableI18nLegacyMessageIdFormat": false,

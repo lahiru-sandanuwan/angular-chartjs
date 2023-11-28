@@ -1,0 +1,10 @@
+<plotly-plot
+  [data]="graph.data"
+  [layout]="graph.layout"
+  [config]="graph.config"
+  (selected)="selectedData($event)"
+  [divId]="embeddingsPlotID"
+  (relayout)="relayout($event)"
+></plotly-plot>
+
+<input class="" type="text" />

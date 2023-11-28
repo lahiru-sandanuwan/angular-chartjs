@@ -1,0 +1,14 @@
+::ng-deep.modebar-container{
+    top: auto !important;
+    bottom: 10px !important;
+    right: 10px !important;
+}
+
+::ng-deep.modebar  {
+    opacity: 1 !important;
+    // fill: black !important;  /* Change 'red' to any color you want */
+}
+
+::ng-deep.modebar .icon.active path {
+    fill: black !important; 
+}

@@ -25,12 +25,12 @@
             "inlineStyleLanguage": "scss",
             "assets": [
               "src/favicon.ico",
-              "src/assets"
+              "src/assets",
+              "src/assets/model/sam_onnx_example.onnx",
+              "src/assets/onnxruntime-web/ort-wasm-simd.wasm"
             ],
-            "styles": [
-              "src/styles.scss"
-            ],
-            "scripts": []
+            "styles": ["src/styles.scss"],
+            "scripts": ["src/assets/opencv.js"]
           },
           "configurations": {
             "production": {
@@ -93,11 +93,11 @@
             "inlineStyleLanguage": "scss",
             "assets": [
               "src/favicon.ico",
-              "src/assets"
+              "src/assets",
+              "src/assets/model/sam_onnx_example.onnx",
+              "src/assets/onnxruntime-web/ort-wasm-simd.wasm"
             ],
-            "styles": [
-              "src/styles.scss"
-            ],
+            "styles": ["src/styles.scss"],
             "scripts": []
           }
         }

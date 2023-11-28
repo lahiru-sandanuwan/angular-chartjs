@@ -1,1 +1,30 @@
-<app-bar-chart></app-bar-chart>
+<!-- <div class="tabs">
+  <div role="button" (click)="setTab(1)">Tab 1</div>
+  <div role="button" (click)="setTab(2)"> Tab 2</div>
+</div>
+
+<app-bar-chart *ngIf="selectedTab == 1"></app-bar-chart>
+
+<app-scatter-plot *ngIf="selectedTab == 2"></app-scatter-plot> -->
+<!-- <div class="relative">
+  <img
+    #imageEl
+    (mousemove)="handleMouseMove($event)"
+    (mouseout)="handleMouseOut()"
+    (touchstart)="handleMouseMove($event)"
+    [src]="appContext.getImage()?.src"
+    [ngClass]="{ 'w-full': shouldFitToWidth, 'h-full': !shouldFitToWidth }"
+  />
+  <img
+    [src]="appContext.getMaskImg()?.src"
+    [ngClass]="{ 'w-full': shouldFitToWidth, 'h-full': !shouldFitToWidth }"
+    class="absolute top-0 left-0 opacity-40 pointer-events-none"
+  />
+</div> -->
+
+<app-stage></app-stage>
+
+<!-- <svg width="1072" height="603"></svg> -->
+
+
+
