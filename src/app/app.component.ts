@@ -17,7 +17,8 @@ import { modelData } from '@antv/sam/dist/api/onnxModel';
 import * as ort from 'onnxruntime-web';
 import { Subscription } from 'rxjs';
 import { onnxMaskToPolygon } from '@antv/sam/dist/utils/mask';
-import * as d3 from 'd3';
+import * as _ from 'lodash';
+
 declare var cv: any;
 @Component({
   selector: 'app-root',
@@ -51,6 +52,7 @@ export class AppComponent implements OnInit {
       this.tensor = await this.loadNpyTensor(this.IMAGE_EMBEDDING, 'float32');
 
       this.clicksSubscription = this.appContext.clicks$.subscribe((clicks) => {
+        this.clicks = clicks;
         if (clicks) {
           this.runONNX();
         }
@@ -59,9 +61,9 @@ export class AppComponent implements OnInit {
       console.error('Error initializing the model or loading data:', error);
     }
 
-    this.clicksSubscription = this.appContext.clicks$.subscribe((clicks) => {
-      this.clicks = clicks;
-    });
+    // this.clicksSubscription = this.appContext.clicks$.subscribe((clicks) => {
+    //   this.clicks = clicks;
+    // });
 
     if (typeof cv !== 'undefined' && cv.getBuildInformation) {
       // OpenCV is loaded
@@ -71,23 +73,6 @@ export class AppComponent implements OnInit {
       console.error('OpenCV not loaded');
     }
   }
-
-  getMouseClick(): void {}
-
-  // async initModel(): Promise<void> {
-  //   const modelDir = './assets/model/sam_onnx_example.onnx';
-  //   ort.env.wasm.wasmPaths = './assets/onnxruntime-web/';
-
-  //   try {
-  //     this.model = await ort.InferenceSession.create(modelDir);
-  //     // console.log(session);
-
-  //     console.log('Model loaded successfully');
-  //     // Further processing here
-  //   } catch (e) {
-  //     console.error('Failed to load the model', e);
-  //   }
-  // }
 
   loadImage(url: string): void {
     try {
@@ -139,7 +124,7 @@ export class AppComponent implements OnInit {
       const results = await this.model.run(feeds);
       const output = results[this.model.outputNames[0]];
 
-      console.log(output);
+      // console.log(output);
 
       // console.log(output.toDataURL());
 
@@ -149,6 +134,16 @@ export class AppComponent implements OnInit {
         output.dims[2],
         output.dims[3]
       );
+      // console.log(maskImage);
+      // maskImage.setAttribute('id', 'mask-img');
+      console.log(this.extractBoundaryPoints('my-image'));
+      // this.drawPolygonInSvg(this.extractBoundaryPoints('my-image'));
+
+      // console.log(_.cloneDeep(this.getBoundaryPoints(maskImage)));
+
+      // const boundaryPoints = this.getBoundaryPoints(maskImage);
+      // this.drawPolygonInSvg(await boundaryPoints);
+      // console.log(await boundaryPoints);
 
       this.appContext.setMaskImg(maskImage);
       // const imgData = output.toImageData();
@@ -168,24 +163,105 @@ export class AppComponent implements OnInit {
     }
   }
 
-  drawPolygon(): void {
-    // const svg = d3.select('svg');
-    // points.forEach((polygon: any) => {
-    //   svg
-    //     .append('polygon')
-    //     .attr('points', polygon.map((point: any) => point.join(',')).join(' '))
-    //     .attr('stroke', 'black')
-    //     .attr('stroke-width', 2)
-    //     .attr('fill', 'none');
-    // });
+  extractBoundaryPoints(imageId: string) {
+    const imageEl = document.getElementById(imageId) as HTMLImageElement;
+    if (!imageEl) return;
+    let src = cv.imread(imageId);
+    let gray = new cv.Mat();
+    let cannyOutput = new cv.Mat();
+    cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY, 0);
+    cv.GaussianBlur(gray, gray, new cv.Size(5, 5), 0, 0, cv.BORDER_DEFAULT);
+    cv.Canny(gray, cannyOutput, 100, 200, 3, false);
 
-    // const svg = d3.select('svg');
-    // svg
-    //   .append('polygon')
-    //   .attr('points', points as any)
-    //   .attr('fill', 'limegreen')
-    //   .attr('stroke', 'black')
-    //   .attr('stroke-width', 2);
+    let contours = new cv.MatVector();
+    let hierarchy = new cv.Mat();
+    // Find contours
+    cv.findContours(
+      cannyOutput,
+      contours,
+      hierarchy,
+      cv.RETR_EXTERNAL,
+      cv.CHAIN_APPROX_SIMPLE
+    );
+    // Extract points from the contours
+    let boundaryPoints: [number, number][] = [];
+    for (let i = 0; i < contours.size(); ++i) {
+      let cnt = contours.get(i);
+      for (let j = 0; j < cnt.data32S.length; j += 2) {
+        boundaryPoints.push([cnt.data32S[j], cnt.data32S[j + 1]]);
+      }
+      cnt.delete();
+    }
+
+    // Cleanup
+    src.delete();
+    gray.delete();
+    cannyOutput.delete();
+    contours.delete();
+    hierarchy.delete();
+
+    return boundaryPoints;
+  }
+
+  // getBoundaryPoints(maskImage: HTMLImageElement): Promise<[number, number][]> {
+  //   return new Promise((resolve, reject) => {
+  //     // Check if the image is already loaded
+  //     if (maskImage.complete && maskImage.naturalWidth !== 0) {
+  //       // Process the already loaded image
+  //       resolve(this.processImage(maskImage));
+  //     } else {
+  //       // Set up load event listener if the image is not yet loaded
+  //       maskImage.onload = () => {
+  //         resolve(this.processImage(maskImage));
+  //       };
+  //       maskImage.onerror = () => {
+  //         reject(new Error('Error loading mask image'));
+  //       };
+  //     }
+  //   });
+  // }
+
+  // processImage(image: HTMLImageElement): [number, number][] {
+  //   const canvas = document.createElement('canvas');
+  //   const context = canvas.getContext('2d');
+  //   canvas.width = image.width;
+  //   canvas.height = image.height;
+  //   context?.drawImage(image, 0, 0);
+
+  //   const imageData = context?.getImageData(0, 0, canvas.width, canvas.height);
+  //   const data = imageData?.data;
+
+  //   const points: [number, number][] = [];
+  //   for (let y = 0; y < canvas.height; y++) {
+  //     for (let x = 0; x < canvas.width; x++) {
+  //       const index = (y * canvas.width + x) * 4;
+  //       if (data && data[index] < 255) {
+  //         // Adjust based on mask's color
+  //         points.push([x, y]);
+  //       }
+  //     }
+  //   }
+
+  //   // Optional: Simplify the points array
+  //   // ...
+
+  //   return points;
+  // }
+
+  drawPolygonInSvg(points: [number, number][]): void {
+    const svgNs = 'http://www.w3.org/2000/svg';
+    const svgElement = document.createElementNS(svgNs, 'svg');
+    const polygon = document.createElementNS(svgNs, 'polygon');
+
+    // Convert points array to a string format suitable for SVG
+    const pointsAttr = points.map((p) => p.join(',')).join(' ');
+    polygon.setAttribute('points', pointsAttr);
+    polygon.style.fill = 'none';
+    polygon.style.stroke = 'red'; // Example: red outline
+    polygon.style.strokeWidth = '2';
+
+    svgElement.appendChild(polygon);
+    document.body.appendChild(svgElement); // Append wherever appropriate in your DOM
   }
 
   base64ToBlob(base64: any): void {

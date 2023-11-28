@@ -39,7 +39,7 @@ export class StageComponent implements OnInit, OnDestroy {
         const imageScale = this.image.width / el.offsetWidth;
         x *= imageScale;
         y *= imageScale;
-        
+
         this.appContext.setClicks([{ x, y, clickType: 1 }]);
       }
     }

@@ -1,14 +1,19 @@
-<img *ngIf="image" 
-     (mousemove)="onMouseMove($event)" 
-     (mouseout)="onMouseOut()"
-     [src]="image.src"
-     [class.w-full]="shouldFitToWidth"
-     [class.h-full]="!shouldFitToWidth">
+<img
+  *ngIf="image"
+  (mousemove)="onMouseMove($event)"
+  (mouseout)="onMouseOut()"
+  [src]="image.src"
+  [class.w-full]="shouldFitToWidth"
+  [class.h-full]="!shouldFitToWidth"
+/>
 
-<img *ngIf="maskImg" 
-     [src]="maskImg.src" 
-     class="mask"
-     [class.w-full]="shouldFitToWidth"
-     [class.h-full]="!shouldFitToWidth">
+<img
+  id="my-image"
+  *ngIf="maskImg"
+  [src]="maskImg.src"
+  class="mask"
+  [class.w-full]="shouldFitToWidth"
+  [class.h-full]="!shouldFitToWidth"
+/>
 
 <!-- <svg width="1072" height="603"></svg> -->
