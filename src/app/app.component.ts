@@ -111,6 +111,8 @@ export class AppComponent implements OnInit {
         return;
       }
 
+      console.log();
+      
       // Prepare the model input in the correct format
       const feeds = modelData({
         clicks: this.clicks,
@@ -123,41 +125,13 @@ export class AppComponent implements OnInit {
       // Run the ONNX model
       const results = await this.model.run(feeds);
       const output = results[this.model.outputNames[0]];
-
-      // console.log(output);
-
-      // console.log(output.toDataURL());
-
-      // Convert the output to an image and update the mask image
       const maskImage = onnxMaskToImage(
         output.data,
         output.dims[2],
         output.dims[3]
       );
-      // console.log(maskImage);
-      // maskImage.setAttribute('id', 'mask-img');
       console.log(this.extractBoundaryPoints('my-image'));
-      // this.drawPolygonInSvg(this.extractBoundaryPoints('my-image'));
-
-      // console.log(_.cloneDeep(this.getBoundaryPoints(maskImage)));
-
-      // const boundaryPoints = this.getBoundaryPoints(maskImage);
-      // this.drawPolygonInSvg(await boundaryPoints);
-      // console.log(await boundaryPoints);
-
       this.appContext.setMaskImg(maskImage);
-      // const imgData = output.toImageData();
-
-      // console.log(imgData);
-
-      // const polygons = onnxMaskToPolygon(
-      //   output.data,
-      //   output.dims[2],
-      //   output.dims[3]
-      // );
-
-      // console.log(polygons);
-      // this.drawPolygon();
     } catch (e) {
       console.error('Error running ONNX model:', e);
     }
@@ -175,6 +149,7 @@ export class AppComponent implements OnInit {
 
     let contours = new cv.MatVector();
     let hierarchy = new cv.Mat();
+
     // Find contours
     cv.findContours(
       cannyOutput,
@@ -183,14 +158,24 @@ export class AppComponent implements OnInit {
       cv.RETR_EXTERNAL,
       cv.CHAIN_APPROX_SIMPLE
     );
+
+
     // Extract points from the contours
     let boundaryPoints: [number, number][] = [];
     for (let i = 0; i < contours.size(); ++i) {
       let cnt = contours.get(i);
-      for (let j = 0; j < cnt.data32S.length; j += 2) {
-        boundaryPoints.push([cnt.data32S[j], cnt.data32S[j + 1]]);
+
+      // Simplify contour
+      let epsilon = 0.005 * cv.arcLength(cnt, true);
+      let approx = new cv.Mat();
+      cv.approxPolyDP(cnt, approx, epsilon, true);
+
+      for (let j = 0; j < approx.data32S.length; j += 2) {
+        boundaryPoints.push([approx.data32S[j], approx.data32S[j + 1]]);
       }
+
       cnt.delete();
+      approx.delete();
     }
 
     // Cleanup

@@ -36,6 +36,7 @@
     "@angular/compiler-cli": "^14.0.0",
     "@types/d3": "^7.4.3",
     "@types/jasmine": "~4.0.0",
+    "@types/lodash": "^4.14.202",
     "@types/plotly.js-dist-min": "^2.3.2",
     "jasmine-core": "~4.1.0",
     "karma": "~6.3.0",
