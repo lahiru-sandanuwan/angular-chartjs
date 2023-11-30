@@ -12,6 +12,7 @@ export class StageComponent implements OnInit, OnDestroy {
   image!: HTMLImageElement | null;
   isThrottling = false;
   throttleDelay = 15;
+  clicks: any = [];
   constructor(public appContext: AppContextService) {}
 
   ngOnInit(): void {
@@ -22,6 +23,39 @@ export class StageComponent implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     this.imageSubscription.unsubscribe();
+  }
+  @HostListener('mousedown', ['$event'])
+  handleMouseClick(event: any) {
+    this.clicks = [];
+    const el = event.target as HTMLElement;
+    const rect = el.getBoundingClientRect();
+    let x = event.clientX - rect.left;
+    let y = event.clientY - rect.top;
+
+    if (this.image) {
+      const imageScale = this.image.width / el.clientWidth;
+      x *= imageScale;
+      y *= imageScale;
+
+      this.clicks.push({ x, y, clickType: 0 });
+    }
+  }
+
+  @HostListener('mouseup', ['$event'])
+  handleMouseUp(event: any) {
+    const el = event.target as HTMLElement;
+    const rect = el.getBoundingClientRect();
+    let x = event.clientX - rect.left;
+    let y = event.clientY - rect.top;
+
+    if (this.image) {
+      const imageScale = this.image.width / el.clientWidth;
+      x *= imageScale;
+      y *= imageScale;
+
+      this.clicks.push({ x, y, clickType: 0 });
+      this.appContext.setClicks(this.clicks);
+    }
   }
 
   @HostListener('mousemove', ['$event'])
@@ -40,7 +74,7 @@ export class StageComponent implements OnInit, OnDestroy {
         x *= imageScale;
         y *= imageScale;
 
-        this.appContext.setClicks([{ x, y, clickType: 1 }]);
+        // this.appContext.setClicks([{ x, y, clickType: 1 }]);
       }
     }
   }

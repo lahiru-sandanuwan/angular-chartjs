@@ -111,8 +111,6 @@ export class AppComponent implements OnInit {
         return;
       }
 
-      console.log();
-      
       // Prepare the model input in the correct format
       const feeds = modelData({
         clicks: this.clicks,
@@ -140,10 +138,10 @@ export class AppComponent implements OnInit {
   extractBoundaryPoints(imageId: string) {
     const imageEl = document.getElementById(imageId) as HTMLImageElement;
     if (!imageEl) return;
-    let src = cv.imread(imageId);
+    let image = cv.imread(imageId);
     let gray = new cv.Mat();
     let cannyOutput = new cv.Mat();
-    cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY, 0);
+    cv.cvtColor(image, gray, cv.COLOR_RGBA2GRAY, 0);
     cv.GaussianBlur(gray, gray, new cv.Size(5, 5), 0, 0, cv.BORDER_DEFAULT);
     cv.Canny(gray, cannyOutput, 100, 200, 3, false);
 
@@ -158,7 +156,6 @@ export class AppComponent implements OnInit {
       cv.RETR_EXTERNAL,
       cv.CHAIN_APPROX_SIMPLE
     );
-
 
     // Extract points from the contours
     let boundaryPoints: [number, number][] = [];
@@ -179,7 +176,7 @@ export class AppComponent implements OnInit {
     }
 
     // Cleanup
-    src.delete();
+    image.delete();
     gray.delete();
     cannyOutput.delete();
     contours.delete();
@@ -187,51 +184,6 @@ export class AppComponent implements OnInit {
 
     return boundaryPoints;
   }
-
-  // getBoundaryPoints(maskImage: HTMLImageElement): Promise<[number, number][]> {
-  //   return new Promise((resolve, reject) => {
-  //     // Check if the image is already loaded
-  //     if (maskImage.complete && maskImage.naturalWidth !== 0) {
-  //       // Process the already loaded image
-  //       resolve(this.processImage(maskImage));
-  //     } else {
-  //       // Set up load event listener if the image is not yet loaded
-  //       maskImage.onload = () => {
-  //         resolve(this.processImage(maskImage));
-  //       };
-  //       maskImage.onerror = () => {
-  //         reject(new Error('Error loading mask image'));
-  //       };
-  //     }
-  //   });
-  // }
-
-  // processImage(image: HTMLImageElement): [number, number][] {
-  //   const canvas = document.createElement('canvas');
-  //   const context = canvas.getContext('2d');
-  //   canvas.width = image.width;
-  //   canvas.height = image.height;
-  //   context?.drawImage(image, 0, 0);
-
-  //   const imageData = context?.getImageData(0, 0, canvas.width, canvas.height);
-  //   const data = imageData?.data;
-
-  //   const points: [number, number][] = [];
-  //   for (let y = 0; y < canvas.height; y++) {
-  //     for (let x = 0; x < canvas.width; x++) {
-  //       const index = (y * canvas.width + x) * 4;
-  //       if (data && data[index] < 255) {
-  //         // Adjust based on mask's color
-  //         points.push([x, y]);
-  //       }
-  //     }
-  //   }
-
-  //   // Optional: Simplify the points array
-  //   // ...
-
-  //   return points;
-  // }
 
   drawPolygonInSvg(points: [number, number][]): void {
     const svgNs = 'http://www.w3.org/2000/svg';
