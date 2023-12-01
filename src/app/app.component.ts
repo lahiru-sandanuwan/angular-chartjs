@@ -34,6 +34,7 @@ export class AppComponent implements OnInit {
   tensor: Tensor | null = null;
   modelScale: modelScaleProps | null = null;
   clicksSubscription!: Subscription;
+  maskImgSubscription!: Subscription;
   clicks: modelInputProps[] | null = null;
   @ViewChild('imageEl') imageEl!: ElementRef<HTMLImageElement>;
   shouldFitToWidth = true;
@@ -57,6 +58,16 @@ export class AppComponent implements OnInit {
           this.runONNX();
         }
       });
+      this.maskImgSubscription = this.appContext.maskImg$.subscribe(
+        (maskImg) => {
+          if (maskImg) {
+            setTimeout(() => {
+              console.log(this.extractBoundaryPoints('my-image'));
+              this.filterImage('my-image');
+            }, 1);
+          }
+        }
+      );
     } catch (error) {
       console.error('Error initializing the model or loading data:', error);
     }
@@ -128,11 +139,15 @@ export class AppComponent implements OnInit {
         output.dims[2],
         output.dims[3]
       );
-      console.log(this.extractBoundaryPoints('my-image'));
       this.appContext.setMaskImg(maskImage);
     } catch (e) {
       console.error('Error running ONNX model:', e);
     }
+  }
+
+  filterImage(imageId: string) {
+    const imageEl = document.getElementById(imageId) as HTMLImageElement;
+    if (!imageEl) return;
   }
 
   extractBoundaryPoints(imageId: string) {
