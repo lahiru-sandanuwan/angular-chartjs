@@ -51,7 +51,6 @@ export class ToolComponent implements OnInit {
       .getPolygonPoints()
       .pipe(takeUntil(this.ngUnsubscribe))
       .subscribe((data: any) => {
-        console.log(data);
         this.drawPolygon(data);
       });
   }

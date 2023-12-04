@@ -1,10 +1,4 @@
-import {
-  Component,
-  ElementRef,
-  HostListener,
-  OnInit,
-  ViewChild,
-} from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { InferenceSession, Tensor } from 'onnxruntime-web';
 import { AppContextService } from './services/app-context.service';
 
@@ -16,7 +10,6 @@ import { handleImageScale } from './helpers/scaleHelper';
 import { modelData } from '@antv/sam/dist/api/onnxModel';
 import * as ort from 'onnxruntime-web';
 import { Subscription } from 'rxjs';
-import { onnxMaskToPolygon } from '@antv/sam/dist/utils/mask';
 import * as _ from 'lodash';
 
 declare var cv: any;
@@ -62,7 +55,6 @@ export class AppComponent implements OnInit {
         (maskImg) => {
           if (maskImg) {
             setTimeout(() => {
-              console.log(this.extractBoundaryPoints('my-image'));
               this.filterImage('my-image');
             }, 1);
           }
@@ -145,59 +137,161 @@ export class AppComponent implements OnInit {
     }
   }
 
-  filterImage(imageId: string) {
-    const imageEl = document.getElementById(imageId) as HTMLImageElement;
+  filterImage(imageSource: string) {
+    const imageEl = document.getElementById(imageSource) as HTMLImageElement;
     if (!imageEl) return;
-  }
 
-  extractBoundaryPoints(imageId: string) {
-    const imageEl = document.getElementById(imageId) as HTMLImageElement;
-    if (!imageEl) return;
-    let image = cv.imread(imageId);
+    let src = cv.imread(imageSource);
     let gray = new cv.Mat();
-    let cannyOutput = new cv.Mat();
-    cv.cvtColor(image, gray, cv.COLOR_RGBA2GRAY, 0);
-    cv.GaussianBlur(gray, gray, new cv.Size(5, 5), 0, 0, cv.BORDER_DEFAULT);
-    cv.Canny(gray, cannyOutput, 100, 200, 3, false);
-
+    let thresh = new cv.Mat();
     let contours = new cv.MatVector();
     let hierarchy = new cv.Mat();
 
+    // Convert to grayscale
+    cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY, 0);
+
+    // Threshold the image
+    cv.threshold(gray, thresh, 1, 255, cv.THRESH_BINARY);
+
     // Find contours
     cv.findContours(
-      cannyOutput,
+      thresh,
       contours,
       hierarchy,
-      cv.RETR_EXTERNAL,
+      cv.RETR_LIST,
       cv.CHAIN_APPROX_SIMPLE
     );
 
-    // Extract points from the contours
-    let boundaryPoints: [number, number][] = [];
+    // The number of contours found will be the number of closed shapes
+    let areas = [];
     for (let i = 0; i < contours.size(); ++i) {
       let cnt = contours.get(i);
+      areas.push(cv.contourArea(cnt, false));
+    }
+    console.log('Shape count:', areas.length);
 
-      // Simplify contour
-      let epsilon = 0.005 * cv.arcLength(cnt, true);
-      let approx = new cv.Mat();
-      cv.approxPolyDP(cnt, approx, epsilon, true);
+    let maxArea = Math.max(...areas);
+    console.log('Max area:', maxArea);
 
-      for (let j = 0; j < approx.data32S.length; j += 2) {
-        boundaryPoints.push([approx.data32S[j], approx.data32S[j + 1]]);
+    // Calculate 20% of the max area
+    let twentyPercentOfMax = 0.2 * maxArea;
+
+    // Filter out contours
+    let significantContours = new cv.MatVector();
+    for (let i = 0; i < contours.size(); ++i) {
+      if (areas[i] >= twentyPercentOfMax) {
+        significantContours.push_back(contours.get(i));
       }
-
-      cnt.delete();
-      approx.delete();
     }
 
-    // Cleanup
-    image.delete();
+    // Create mask and draw significant contours
+    let mask = cv.Mat.zeros(gray.rows, gray.cols, cv.CV_8UC1);
+    cv.drawContours(
+      mask,
+      significantContours,
+      -1,
+      new cv.Scalar(255, 255, 255, 255),
+      cv.FILLED
+    );
+
+    let canvas = document.createElement('canvas');
+    canvas.width = mask.cols;
+    canvas.height = mask.rows;
+    cv.imshow(canvas, mask);
+    let base64Image = canvas.toDataURL();
+
+    // Clean up
+    src.delete();
     gray.delete();
-    cannyOutput.delete();
+    thresh.delete();
     contours.delete();
     hierarchy.delete();
+    mask.delete();
+    significantContours.delete();
 
-    return boundaryPoints;
+    const points = this.extractBoundaryPoints(base64Image);
+    this.extractBoundaryPoints(base64Image)
+      .then((points) => {
+        if (!points) return;
+        this.appContext.setShapePoints(points);
+      })
+      .catch((error) => {
+        console.error('Error:', error);
+      });
+  }
+
+  extractBoundaryPoints(base64Image: string) {
+    return new Promise((resolve, reject) => {
+      const imageEl = new Image();
+      imageEl.onload = () => {
+        // Create a canvas and draw the image on it
+        const canvas = document.createElement('canvas');
+        canvas.width = imageEl.width;
+        canvas.height = imageEl.height;
+        const ctx = canvas.getContext('2d');
+        ctx?.drawImage(imageEl, 0, 0);
+
+        // Now use the canvas with OpenCV
+        let image = cv.imread(canvas);
+        let gray = new cv.Mat();
+        let cannyOutput = new cv.Mat();
+        cv.cvtColor(image, gray, cv.COLOR_RGBA2GRAY, 0);
+        cv.GaussianBlur(gray, gray, new cv.Size(5, 5), 0, 0, cv.BORDER_DEFAULT);
+        cv.Canny(gray, cannyOutput, 100, 200, 3, false);
+
+        let contours = new cv.MatVector();
+        let hierarchy = new cv.Mat();
+
+        // Find contours
+        cv.findContours(
+          cannyOutput,
+          contours,
+          hierarchy,
+          cv.RETR_EXTERNAL,
+          cv.CHAIN_APPROX_SIMPLE
+        );
+
+        // Extract points from the contours, separated by shape
+        let shapes = [];
+        for (let i = 0; i < contours.size(); ++i) {
+          let cnt = contours.get(i);
+
+          // Simplify contour
+          let epsilon = 0.0005 * cv.arcLength(cnt, true);
+          let approx = new cv.Mat();
+          cv.approxPolyDP(cnt, approx, epsilon, true);
+
+          let shape = [];
+          for (let j = 0; j < approx.data32S.length; j += 2) {
+            shape.push([approx.data32S[j], approx.data32S[j + 1]]);
+          }
+          // for (let j = 0; j < cnt.data32S.length; j += 2) {
+          //   shape.push([cnt.data32S[j], cnt.data32S[j + 1]]);
+          // }
+
+          shapes.push(shape);
+
+          cnt.delete();
+          approx.delete();
+        }
+
+        // Cleanup
+        image.delete();
+        gray.delete();
+        cannyOutput.delete();
+        contours.delete();
+        hierarchy.delete();
+
+        resolve(shapes);
+      };
+
+      imageEl.onerror = () => {
+        reject(new Error('Failed to load image'));
+      };
+
+      // Set the source to the base64 string
+      imageEl.src = base64Image;
+    });
   }
 
   drawPolygonInSvg(points: [number, number][]): void {

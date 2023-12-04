@@ -16,6 +16,9 @@ export class AppContextService {
   private maskImgSource = new BehaviorSubject<HTMLImageElement | null>(null);
   maskImg$ = this.maskImgSource.asObservable();
 
+  private shapePoints = new BehaviorSubject<any>(null);
+  shapePoints$ = this.shapePoints.asObservable();
+
   private polygonPoints: BehaviorSubject<any> = new BehaviorSubject<any>(null);
 
   setClicks(clicks: modelInputProps[] | null): void {
@@ -28,6 +31,10 @@ export class AppContextService {
 
   setMaskImg(maskImg: HTMLImageElement | null): void {
     this.maskImgSource.next(maskImg);
+  }
+
+  setShapePoints(points: any): void {
+    this.shapePoints.next(points);
   }
 
   setPolygonPoints(points: any): void {

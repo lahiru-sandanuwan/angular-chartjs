@@ -10,6 +10,7 @@ import * as d3 from 'd3';
 })
 export class StageComponent implements OnInit, OnDestroy {
   imageSubscription!: Subscription;
+  shapesSubscription!: Subscription;
   image!: HTMLImageElement | null;
   isThrottling = false;
   throttleDelay = 15;
@@ -33,19 +34,51 @@ export class StageComponent implements OnInit, OnDestroy {
     this.imageSubscription = this.appContext.image$.subscribe((img) => {
       this.image = img;
     });
+
+    this.shapesSubscription = this.appContext.shapePoints$.subscribe(
+      (shapes) => {
+        this.drawShapes(shapes);
+      }
+    );
   }
 
   ngOnDestroy() {
     this.imageSubscription.unsubscribe();
   }
-  @HostListener('mousedown', ['$event'])
-  handleMouseClick(event: any) {
-    if (!this.isDrawing && event.target === this.svg.node()) {
+
+  drawShapes(shapes: any) {
+    if (shapes) {
+      console.log('Filtered count:', shapes.length);
 
       this.svg.selectAll('rect').remove();
+      this.svg.selectAll('polygon').remove();
+      shapes.forEach((shape: any) => {
+        this.svg
+          .append('polygon')
+          .attr('points', shape)
+          .attr('stroke', 'black')
+          .attr('stroke-width', 2)
+          .attr('fill', 'none');
+      });
+    }
+  }
 
-      this.startX = event.offsetX;
-      this.startY = event.offsetY;
+  @HostListener('mousedown', ['$event'])
+  handleMouseClick(event: any) {
+    this.clicks = [];
+
+    const el = document.getElementById('svgItem') as HTMLElement;
+    const rect = el.getBoundingClientRect();
+
+    let x = event.clientX - rect.left;
+    let y = event.clientY - rect.top;
+
+    if (!this.isDrawing && event.target === this.svg.node()) {
+      this.svg.selectAll('rect').remove();
+
+      this.startX = x;
+      this.startY = y;
+
       this.rect = this.svg
         .append('rect')
         .attr('x', this.startX)
@@ -58,22 +91,13 @@ export class StageComponent implements OnInit, OnDestroy {
       this.isDrawing = true;
     }
 
-    this.clicks = [];
-    const el = event.target as HTMLElement;
-    const rect = el.getBoundingClientRect();
-    let x = event.clientX - rect.left;
-    let y = event.clientY - rect.top;
-
     if (this.image) {
       const imageScale = this.image.width / el.clientWidth;
       x *= imageScale;
       y *= imageScale;
 
-      this.clicks.push({ x, y, clickType: 0 });
+      this.clicks.push({ x, y, clickType: 2 });
     }
-
-    console.log(this.clicks);
-    
   }
 
   @HostListener('mouseup', ['$event'])
@@ -83,17 +107,23 @@ export class StageComponent implements OnInit, OnDestroy {
       this.rect.attr('stroke-dasharray', 'none');
     }
 
-    const el = event.target as HTMLElement;
+    // const el = event.target as HTMLElement;
+    const el = document.getElementById('svgItem') as HTMLElement;
     const rect = el.getBoundingClientRect();
     let x = event.clientX - rect.left;
     let y = event.clientY - rect.top;
 
     if (this.image) {
       const imageScale = this.image.width / el.clientWidth;
+
       x *= imageScale;
       y *= imageScale;
 
-      this.clicks.push({ x, y, clickType: 0 });
+      // check if mouse move after mouse down
+      if (this.startX !== x || this.startY !== y) {
+        this.clicks.push({ x, y, clickType: 3 });
+      }
+      // this.clicks.push({ x, y, clickType: 0 });
       this.appContext.setClicks(this.clicks);
     }
   }
@@ -109,23 +139,5 @@ export class StageComponent implements OnInit, OnDestroy {
         .attr('x', currentX - this.startX > 0 ? this.startX : currentX)
         .attr('y', currentY - this.startY > 0 ? this.startY : currentY);
     }
-
-    // if (!this.isThrottling) {
-    //   this.isThrottling = true;
-    //   setTimeout(() => (this.isThrottling = false), this.throttleDelay);
-
-    //   const el = event.target as HTMLElement;
-    //   const rect = el.getBoundingClientRect();
-    //   let x = event.clientX - rect.left;
-    //   let y = event.clientY - rect.top;
-
-    //   if (this.image) {
-    //     const imageScale = this.image.width / el.offsetWidth;
-    //     x *= imageScale;
-    //     y *= imageScale;
-
-    //     // this.appContext.setClicks([{ x, y, clickType: 1 }]);
-    //   }
-    // }
   }
 }
