@@ -43,34 +43,38 @@ export class AppComponent implements OnInit {
 
   constructor(public appContext: AppContextService) {}
 
-  async ngOnInit() {
-    try {
-      ort.env.wasm.wasmPaths = './assets/onnxruntime-web/';
-      this.model = await ort.InferenceSession.create(this.MODEL_DIR);
-      await this.loadImage(this.IMAGE_PATH);
-      this.tensor = await this.loadNpyTensor(this.IMAGE_EMBEDDING, 'float32');
-
-      this.clicksSubscription = this.appContext.clicks$.subscribe((clicks) => {
-        if (clicks) {
-          this.runONNX();
-        }
-      });
-    } catch (error) {
-      console.error('Error initializing the model or loading data:', error);
-    }
-
-    this.clicksSubscription = this.appContext.clicks$.subscribe((clicks) => {
-      this.clicks = clicks;
-    });
-
-    if (typeof cv !== 'undefined' && cv.getBuildInformation) {
-      // OpenCV is loaded
-      console.log('OpenCV loaded');
-      // Now you can use OpenCV functions
-    } else {
-      console.error('OpenCV not loaded');
-    }
+  ngOnInit(): void {
+      
   }
+
+  // async ngOnInit() {
+  //   try {
+  //     ort.env.wasm.wasmPaths = './assets/onnxruntime-web/';
+  //     this.model = await ort.InferenceSession.create(this.MODEL_DIR);
+  //     await this.loadImage(this.IMAGE_PATH);
+  //     this.tensor = await this.loadNpyTensor(this.IMAGE_EMBEDDING, 'float32');
+
+  //     this.clicksSubscription = this.appContext.clicks$.subscribe((clicks) => {
+  //       if (clicks) {
+  //         this.runONNX();
+  //       }
+  //     });
+  //   } catch (error) {
+  //     console.error('Error initializing the model or loading data:', error);
+  //   }
+
+  //   this.clicksSubscription = this.appContext.clicks$.subscribe((clicks) => {
+  //     this.clicks = clicks;
+  //   });
+
+  //   if (typeof cv !== 'undefined' && cv.getBuildInformation) {
+  //     // OpenCV is loaded
+  //     console.log('OpenCV loaded');
+  //     // Now you can use OpenCV functions
+  //   } else {
+  //     console.error('OpenCV not loaded');
+  //   }
+  // }
 
   getMouseClick(): void {}
 

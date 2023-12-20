@@ -27,7 +27,8 @@
               "src/favicon.ico",
               "src/assets",
               "src/assets/model/sam_onnx_example.onnx",
-              "src/assets/onnxruntime-web/ort-wasm-simd.wasm"
+              "src/assets/onnxruntime-web/ort-wasm-simd.wasm",
+              { "glob": "**/*", "input": "node_modules/ng2-pdfjs-viewer/pdfjs", "output": "/assets/pdfjs" }
             ],
             "styles": ["src/styles.scss"],
             "scripts": ["src/assets/opencv.js"]
@@ -67,6 +68,9 @@
         },
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
+          "options": {
+            "proxyConfig": "src/proxy.conf.json"
+          },
           "configurations": {
             "production": {
               "browserTarget": "angular-chartjs:build:production"
@@ -91,11 +95,13 @@
             "tsConfig": "tsconfig.spec.json",
             "karmaConfig": "karma.conf.js",
             "inlineStyleLanguage": "scss",
+            "proxyConfig": "src/proxy.conf.json",
             "assets": [
               "src/favicon.ico",
               "src/assets",
               "src/assets/model/sam_onnx_example.onnx",
-              "src/assets/onnxruntime-web/ort-wasm-simd.wasm"
+              "src/assets/onnxruntime-web/ort-wasm-simd.wasm",
+              { "glob": "**/*", "input": "node_modules/ng2-pdfjs-viewer/pdfjs", "output": "/assets/pdfjs" },
             ],
             "styles": ["src/styles.scss"],
             "scripts": []

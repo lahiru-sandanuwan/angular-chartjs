@@ -1,0 +1,34 @@
+<div *ngIf="isObject(data)">
+  <span class="expandable" (click)="data._isCollapsed = !data._isCollapsed">
+    {{ data._isCollapsed ? "▶" : "▼" }}
+  </span>
+  <div *ngIf="!data._isCollapsed">
+    <div *ngFor="let key of getObjectKeys(data)" class="indent">
+      <strong *ngIf="isArray(data[key])"
+        >{{ key }}
+        {{ isArray(data[key]) ? " [" + data[key].length + "]" : "" }}:</strong
+      >
+      <app-json-node [data]="data[key]" [parentKey]="key"></app-json-node>
+    </div>
+  </div>
+</div>
+
+<div *ngIf="isArray(data)">
+  <span class="expandable" (click)="data._isCollapsed = !data._isCollapsed">
+    {{ data._isCollapsed ? "▶" : "▼" }}
+  </span>
+  <div *ngIf="!data._isCollapsed" class="indent">
+    <div *ngFor="let item of data; let i = index" style="display: flex">
+      <strong>{{ i }}:</strong>
+      <span *ngIf="getObjectKeys(item).length > 0">{{
+        "{" + getObjectKeys(item).length + "}"
+      }}</span>
+      <app-json-node [data]="item" [isRoot]="false"></app-json-node>
+    </div>
+  </div>
+</div>
+
+<div *ngIf="!isObject(data) && !isArray(data)">
+    <span *ngIf="!isRoot">{{ data }}</span>
+    <span *ngIf="isRoot"><strong>{{ parentKey }}:</strong>{{ data }}</span>
+</div>

@@ -10,8 +10,9 @@ import { PlotlyModule } from 'angular-plotly.js';
 import * as PlotlyJS from 'plotly.js-dist-min';
 import { StageComponent } from './stage/stage.component';
 import { ToolComponent } from './tool/tool.component';
-import { AppContextService } from './services/app-context.service';
-
+import { FileViewerComponent } from './file-viewer/file-viewer.component';
+import { PdfJsViewerModule } from 'ng2-pdfjs-viewer';
+import { JsonNodeComponent } from './file-viewer/json-node/json-node.component';
 PlotlyModule.plotlyjs = PlotlyJS;
 @NgModule({
   declarations: [
@@ -20,8 +21,10 @@ PlotlyModule.plotlyjs = PlotlyJS;
     ScatterPlotComponent,
     StageComponent,
     ToolComponent,
+    FileViewerComponent,
+    JsonNodeComponent,
   ],
-  imports: [BrowserModule, AppRoutingModule, PlotlyModule],
+  imports: [BrowserModule, AppRoutingModule, PlotlyModule, PdfJsViewerModule],
   providers: [],
   bootstrap: [AppComponent],
 })
