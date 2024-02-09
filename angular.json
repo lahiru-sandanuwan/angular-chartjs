@@ -29,7 +29,10 @@
               "src/assets/model/sam_onnx_example.onnx",
               "src/assets/onnxruntime-web/ort-wasm-simd.wasm"
             ],
-            "styles": ["src/styles.scss"],
+            "styles": [
+              "src/styles.scss",
+              "node_modules/leaflet/dist/leaflet.css"
+            ],
             "scripts": ["src/assets/opencv.js"]
           },
           "configurations": {

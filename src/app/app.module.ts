@@ -11,6 +11,7 @@ import * as PlotlyJS from 'plotly.js-dist-min';
 import { StageComponent } from './stage/stage.component';
 import { ToolComponent } from './tool/tool.component';
 import { AppContextService } from './services/app-context.service';
+import { MapComponent } from './map/map.component';
 
 PlotlyModule.plotlyjs = PlotlyJS;
 @NgModule({
@@ -20,6 +21,7 @@ PlotlyModule.plotlyjs = PlotlyJS;
     ScatterPlotComponent,
     StageComponent,
     ToolComponent,
+    MapComponent,
   ],
   imports: [BrowserModule, AppRoutingModule, PlotlyModule],
   providers: [],
